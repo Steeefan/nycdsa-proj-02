@@ -1,4 +1,4 @@
-# Get data from SWR3 playlists from begDate to endDate
+# Get data from SWR3 playlists for missing entries
 
 import datetime
 import bs4
@@ -6,6 +6,7 @@ import requests
 import csv
 import os
 import time
+import pandas as pd
 
 os.chdir(r'E:\Projects\02 Web Scraping Project')
 wdir = os.getcwd()
@@ -42,23 +43,15 @@ def getSWR3Playlist(plURL):
 swr3URL = 'http://www.swr3.de/musik/playlisten/-/id=47424/cf=42/did=65794/93avs/index.html?'
 swr3Songs = list()
 
-begDate = datetime.date(2016, 2, 15)
-endDate = datetime.date(2016, 2, 15)
-begHour = 23
-endHour = 24
-thisDate = begDate + datetime.timedelta(days = -1)
-
+reload = pd.read_csv(wdir + '/data/dirty/reload/reload.csv', sep=';')
+print(reload.head())
 # Get playlists from beginDate to endDate
-while(thisDate < endDate):
-    thisDate += datetime.timedelta(days = 1)
-
-    # For each hour of the day
-    for hour in range(begHour, endHour):
-        print(time.strftime("%Y-%m-%d %H:%M:%S"), '-', 'Getting data:', 'day =', thisDate, 'hour =', hour)
-        swr3Songs += getSWR3Playlist(swr3URL + 'hour=' + str(hour) + '&date=' + thisDate.strftime('%Y-%m-%d'))
+for index, row in reload.iterrows():
+    print(time.strftime("%Y-%m-%d %H:%M:%S"), '-', 'Getting data:', 'day =', row['date'], 'hour =', row['hour'])
+    swr3Songs += getSWR3Playlist(swr3URL + 'hour=' + str(row['hour']) + '&date=' + row['date'])
 
 i = 0
-with open(wdir + '/data/dirty/reload/swr3-songs-' + endDate.strftime('%y%m%d') + '-' + begDate.strftime('%y%m%d') + '.csv', 'w', encoding='utf-8') as tgtFile:
+with open(wdir + '/data/dirty/reload/missing.csv', 'w', encoding='utf-8') as tgtFile:
     wr = csv.DictWriter(tgtFile, swr3Songs[0].keys(), quoting=csv.QUOTE_ALL)
     wr.writeheader()
     for i in range(len(swr3Songs)):
