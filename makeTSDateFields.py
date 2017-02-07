@@ -56,7 +56,7 @@ songs = pd.read_csv(wdirF + 'swr3-songs-2016-v2.csv')
 songs['ts'] = songs.apply(lambda row: datetime.datetime.strptime(row['date'] + ' ' + row['time'], '%d.%m.%Y %H:%M'), axis=1)
 songs = songs[['ts', 'title', 'artist']]
 songs.sort_values(by='ts', inplace=True)
-songs.reset_index(inplace=True)
+songs.reset_index(drop=True, inplace=True)
 
 # Create more date and time variables
 songs['day'] = songs.apply(lambda row: row['ts'].day, axis=1)
