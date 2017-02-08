@@ -54,7 +54,6 @@ songs = pd.read_csv(wdirF + 'swr3-songs-2016-v2.csv')
 
 # Create timestamp from 'date' and 'time' columns, then remove the latter two
 songs['ts'] = songs.apply(lambda row: datetime.datetime.strptime(row['date'] + ' ' + row['time'], '%d.%m.%Y %H:%M'), axis=1)
-songs = songs[['ts', 'title', 'artist']]
 songs.sort_values(by='ts', inplace=True)
 songs.reset_index(drop=True, inplace=True)
 
