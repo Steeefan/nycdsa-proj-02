@@ -35,7 +35,7 @@ shinyUI(dashboardPage(
           box(
             p('Welcome to the SWR3 Song Explorer!'),
             p(
-              'Here you an explore all the songs that were played on German',
+              'Here you can explore all the songs that were played on German',
               'radio station SWR3 over the course of whatever it says just',
               'below. Enjoy!'
             ),
@@ -45,7 +45,7 @@ shinyUI(dashboardPage(
 
         fluidRow(
           column(
-            width=6,
+            width=4,
             infoBoxOutput('datesLoaded', width=12),
             infoBoxOutput('daysLoaded', width=12),
             infoBoxOutput('songsPlayed', width=12),
@@ -54,10 +54,20 @@ shinyUI(dashboardPage(
           ),
 
           column(
-            width=6,
+            width=4,
+            infoBoxOutput('topSong', width=12),
+            infoBoxOutput('topArtist', width=12)
+            # infoBoxOutput('songsPlayed', width=12),
+            # infoBoxOutput('distSongsPlayed', width=12),
+            # infoBoxOutput('distArtistsPlayed', width=12)
+          ),
+
+          column(
+            width=4,
             box(
-              img(src='swr3-elch.png', align='center'),
+              img(src='swr3-elch.png', align='center', width='100%'),
               width=12,
+              height='100%',
               align='center',
               solidHeader=T
             )
@@ -68,6 +78,114 @@ shinyUI(dashboardPage(
       tabPanel(
         'Songs',
         fluidRow(
+          box(
+            title='Filters',
+            collapsible=T,
+            solidHeader=T,
+            width=12,
+            collapsed=T,
+
+            column(
+              selectInput(
+                'selArtist',
+                label='Artist',
+                choices=arrange(distinct(songs, artist), artist),
+                multiple=T
+              ),
+              # uiOutput('selArtistCtrl'),
+              width=2
+            ),
+
+            column(
+              selectInput(
+                'selTitle',
+                label='Title',
+                choices=arrange(distinct(songs, title), title),
+                multiple=T
+              ),
+              width=2
+            ),
+
+            column(
+              selectInput(
+                'selQuarter',
+                label='Quarter',
+                choices=1:4,
+                multiple=T
+              ),
+              width=1
+            ),
+
+            column(
+              selectInput(
+                'selMonth',
+                label='Month',
+                choices=1:12,
+                multiple=T
+              ),
+              width=1
+            ),
+
+            column(
+              selectInput(
+                'selWday',
+                label='Weekday',
+                choices=c('Mon', 'Tue', 'Wed', 'Thu', 'Fri', 'Sat', 'Sun'),
+                multiple=T
+              ),
+              width=1
+            ),
+
+            column(
+              selectInput(
+                'selSeason',
+                label='Season',
+                choices=c(
+                  'Winter' = 'winter',
+                  'Spring' = 'spring',
+                  'Summer' = 'summer',
+                  'Fall' = 'fall'),
+                multiple=T
+              ),
+              width=1
+            ),
+
+            column(
+              selectInput(
+                'selRushHour',
+                label='Rush Hour',
+                choices=c(
+                  'Morning' = 'morning',
+                  'Evening' = 'evening'
+                  ),
+                multiple=T
+              ),
+              width=1
+            ),
+
+            column(
+              dateRangeInput(
+                'selDateRange',
+                'Dates',
+                start=min(songs$date),
+                end=max(songs$date),
+                min=min(songs$date),
+                max=max(songs$date),
+                format='yyyy-mm-dd'
+              ),
+              width=2
+            ),
+
+            column(
+              actionButton(
+                'selReset',
+                'Reset',
+                style='position: relative; top: 22px'
+              ),
+              width=1
+            )
+          ),
+
           tabBox(
             title='Songs',
             id='tabsetSongs',
@@ -78,18 +196,63 @@ shinyUI(dashboardPage(
               fluidRow(
                 box(
                   dataTableOutput('songsTable'),
-                  width=12
+                  width=12,
+                  solidHeader=T
                 )
               )
             ),
 
             tabPanel(
-              'Timeline',
+              'Calendar',
 
               fluidRow(
                 box(
-                  'here be mooses',
-                  width=12
+                  htmlOutput('songsCalendar'),
+                  width=12,
+                  solidHeader=T
+                )
+              )
+            ),
+
+            tabPanel(
+              'Clock',
+
+              fluidRow(
+                box(
+                  plotOutput('songsClock'),
+                  width=6,
+                  solidHeader=T
+                )
+              )
+            ),
+
+            tabPanel(
+              'Histogram',
+
+              fluidRow(
+                box(
+                  htmlOutput('songsHisto'),
+                  width=12,
+                  solidHeader=T
+                )
+              )
+            ),
+
+            tabPanel(
+              'By Artist',
+                fluidRow(
+                box(
+                  sliderInput(
+                    'sliSongsPerArtist',
+                    label=h4('Scrollbar'),
+                    min=0,
+                    max=n_distinct(songs$artist),
+                    value=c(0, 200)
+                  ),
+
+                  htmlOutput('songsArtist'),
+                  width=12,
+                  solidHeader=T
                 )
               )
             ),
@@ -98,9 +261,9 @@ shinyUI(dashboardPage(
         )
       ),
 
-      tabPanel(
-        'Time'
-      ),
+      # tabPanel(
+      #   'Time'
+      # ),
 
       tabPanel(
         'About',

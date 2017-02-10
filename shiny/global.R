@@ -1,8 +1,25 @@
+# Shiny
 library(shiny)
 library(shinydashboard)
+
+# Charts
+library(googleVis)
+library(ggplot2)
+library(RColorBrewer)
+
+# Data wrangling
 library(dplyr)
+
+# Date wrangling
 library(lubridate)
+
+# Nicer data tables
 library(DT)
+
+# %like%
+library(data.table)
+
+source('helpers.R')
 
 songs = readRDS('data/clean/swr3-songs-2016-v3.rds')
 shows = readRDS('data/clean/shows.rds')
@@ -21,10 +38,11 @@ songs = mutate(
 )
 
 distSongs = songs %>%
-  group_by(title, artist) %>%
+  group_by(artist, title) %>%
   summarise(
-    from = min(ts),
-    to = max(ts),
     playCount = n()
-  ) %>%
-  arrange(desc(playCount))
+  )
+
+halves = quantile(distSongs$playCount, c(0, .5, 1))
+plot(cut(distSongs$playCount, halves, include.lowest=T))
+hist(distSongs$playCount)

@@ -3,6 +3,7 @@
 import pandas as pd
 import datetime
 import csv
+import re
  
 wdir = r'E:\Projects\02 Web Scraping Project'
 env = 'data/clean'
@@ -56,6 +57,11 @@ songs = pd.read_csv(wdirF + 'swr3-songs-2016-v2.csv')
 songs['ts'] = songs.apply(lambda row: datetime.datetime.strptime(row['date'] + ' ' + row['time'], '%d.%m.%Y %H:%M'), axis=1)
 songs.sort_values(by='ts', inplace=True)
 songs.reset_index(drop=True, inplace=True)
+
+# Clean artist name. Sometimes artists singing the same title have different spellings:
+#  * Vega, Suzanne - Luka
+#  * Vega,Suzanne - Luka
+songs['artist'] = songs.apply(lambda row: re.sub(',(?=[A-Za-z0-9])', ', ', row['artist']), axis=1)
 
 # Create more date and time variables
 songs['day'] = songs.apply(lambda row: row['ts'].day, axis=1)
