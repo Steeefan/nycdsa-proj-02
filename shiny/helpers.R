@@ -1,3 +1,5 @@
+'%ni%' <- Negate('%in%')
+
 filterDF = function(df, selArtist, selTitle, selQuarter, selMonth, selWday, selSeason, selRushHour, selDateRange) {
   if (!is.null(selArtist))
     df = filter(df, artist %in% selArtist)

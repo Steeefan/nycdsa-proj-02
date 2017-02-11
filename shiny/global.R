@@ -6,6 +6,7 @@ library(shinydashboard)
 library(googleVis)
 library(ggplot2)
 library(RColorBrewer)
+library(wordcloud2)
 
 # Data wrangling
 library(dplyr)
@@ -23,6 +24,7 @@ source('helpers.R')
 
 songs = readRDS('data/clean/swr3-songs-2016-v3.rds')
 shows = readRDS('data/clean/shows.rds')
+wordCloudFilter = readLines('data/wordcloudfilter.txt')
 
 tz = 'Europe/Berlin'
 tsFormat = '%F %T'
@@ -37,12 +39,9 @@ songs = mutate(
   wdayLbl = as.character(wdayLbl)
 )
 
+# Grouped by artist, title
 distSongs = songs %>%
   group_by(artist, title) %>%
   summarise(
     playCount = n()
   )
-
-halves = quantile(distSongs$playCount, c(0, .5, 1))
-plot(cut(distSongs$playCount, halves, include.lowest=T))
-hist(distSongs$playCount)

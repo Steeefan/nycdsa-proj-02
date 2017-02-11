@@ -195,6 +195,7 @@ shinyUI(dashboardPage(
 
               fluidRow(
                 box(
+                  h2('Complete overview'),
                   dataTableOutput('songsTable'),
                   width=12,
                   solidHeader=T
@@ -207,6 +208,7 @@ shinyUI(dashboardPage(
 
               fluidRow(
                 box(
+                  h2('Songs played by day of year'),
                   htmlOutput('songsCalendar'),
                   width=12,
                   solidHeader=T
@@ -219,9 +221,11 @@ shinyUI(dashboardPage(
 
               fluidRow(
                 box(
+                  h2('Songs played by hour of day'),
                   plotOutput('songsClock'),
                   width=6,
-                  solidHeader=T
+                  solidHeader=T,
+                  height=600
                 )
               )
             ),
@@ -231,6 +235,7 @@ shinyUI(dashboardPage(
 
               fluidRow(
                 box(
+                  h2('Histogram about song playcount frequence'),
                   htmlOutput('songsHisto'),
                   width=12,
                   solidHeader=T
@@ -239,9 +244,10 @@ shinyUI(dashboardPage(
             ),
 
             tabPanel(
-              'By Artist',
+              'Songs per Artist',
                 fluidRow(
                 box(
+                  h2('Distinct songs per artist'),
                   sliderInput(
                     'sliSongsPerArtist',
                     label=h4('Scrollbar'),
@@ -256,14 +262,52 @@ shinyUI(dashboardPage(
                 )
               )
             ),
+
+            tabPanel(
+              'Song Title Word Cloud',
+
+              fluidRow(
+                h2('300 top words in song titles'),
+                box(
+                  sliderInput(
+                    'sliWordCloudWords',
+                    label=h4('Select amount of words to show'),
+                    min=0,
+                    max=1000,
+                    value=300
+                  ),
+                  width=12,
+                  solidHeader=T,
+                  collapsible=T,
+                  collapsed=T
+                )
+              ),
+
+              fluidRow(
+                column(
+                  width=3
+                ),
+
+                column(
+                  box(
+                    wordcloud2Output('songsCloud'),
+                    width=12,
+                    solidHeader=T,
+                    height=500
+                  ),
+                  width=6
+                ),
+
+                column(
+                  width=3
+                )
+              )
+            ),
+
             width=12
           )
         )
       ),
-
-      # tabPanel(
-      #   'Time'
-      # ),
 
       tabPanel(
         'About',

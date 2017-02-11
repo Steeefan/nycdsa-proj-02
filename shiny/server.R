@@ -82,228 +82,293 @@ shinyServer(function(input, output) {
     )
   })
 
-  # output$selArtistCtrl = renderUI({
-  #   songsFiltered = filterDF(
-  #     songs,
-  #     input$selArtist,
-  #     input$selTitle,
-  #     input$selQuarter,
-  #     input$selMonth,
-  #     input$selWday,
-  #     input$selSeason,
-  #     input$selRushHour,
-  #     input$selDateRange
-  #   )
-  #
-  #   selectInput(
-  #     'selArtist',
-  #     label='Artist',
-  #     choices=distinct(songsFiltered, artist),
-  #     multiple=T
-  #   )
-  # })
-
   ## SONGS
   output$songsTable = renderDataTable({
-    songsFiltered = filterDF(
-      songs,
-      input$selArtist,
-      input$selTitle,
-      input$selQuarter,
-      input$selMonth,
-      input$selWday,
-      input$selSeason,
-      input$selRushHour,
-      input$selDateRange
-    )
-
-    distSongs = songsFiltered %>%
-      group_by(artist, title) %>%
-      summarise(
-        from = min(ts),
-        to = max(ts),
-        playCount = n()
-      ) %>%
-      arrange(desc(playCount))
-
-    datatable(
-      mutate(
-        distSongs,
-        from=strftime(from, format='%F %H:%M', tz='Europe/Berlin'),
-        to=strftime(to, format='%F %H:%M', tz='Europe/Berlin')
-      ),
-      options = list(
-        pageLength = 25
+    withProgress(message='Generating data table...', {
+      songsFiltered = filterDF(
+        songs,
+        input$selArtist,
+        input$selTitle,
+        input$selQuarter,
+        input$selMonth,
+        input$selWday,
+        input$selSeason,
+        input$selRushHour,
+        input$selDateRange
       )
-    )
+
+      incProgress(0.25)
+
+      distSongs = songsFiltered %>%
+        group_by(artist, title) %>%
+        summarise(
+          from = min(ts),
+          to = max(ts),
+          playCount = n()
+        ) %>%
+        arrange(desc(playCount))
+
+      incProgress(0.75)
+
+      datatable(
+        mutate(
+          distSongs,
+          from=strftime(from, format='%F %H:%M', tz='Europe/Berlin'),
+          to=strftime(to, format='%F %H:%M', tz='Europe/Berlin')
+        ),
+        options = list(
+          pageLength = 25
+        )
+      )
+    })
   })
 
   output$songsCalendar = renderGvis({
-    songsFiltered = filterDF(
-      songs,
-      input$selArtist,
-      input$selTitle,
-      input$selQuarter,
-      input$selMonth,
-      input$selWday,
-      input$selSeason,
-      input$selRushHour,
-      input$selDateRange
-    )
-
-    distSongs = songsFiltered %>%
-      group_by(date) %>%
-      summarise(
-        playCount = n()
-      ) %>%
-      arrange(desc(playCount))
-
-    gvisCalendar(
-      distSongs,
-      datevar='date',
-      numvar='playCount',
-      options = list(
-        width='100%',
-        title=paste('Songs x Year')
+    withProgress(message='Generating calendar...', {
+      songsFiltered = filterDF(
+        songs,
+        input$selArtist,
+        input$selTitle,
+        input$selQuarter,
+        input$selMonth,
+        input$selWday,
+        input$selSeason,
+        input$selRushHour,
+        input$selDateRange
       )
-    )
+
+      incProgress(0.25)
+
+      distSongs = songsFiltered %>%
+        group_by(date) %>%
+        summarise(
+          playCount = n()
+        ) %>%
+        arrange(desc(playCount))
+
+      incProgress(0.75)
+
+      gvisCalendar(
+        distSongs,
+        datevar='date',
+        numvar='playCount',
+        options = list(
+          width='100%',
+          title=paste('Songs x Year'),
+          colorAxis=
+            paste(
+              '{',
+                'minValue: 0, colors: [\'#FFFFFF\', \'#FF0000\']',
+              '}'
+          )
+        )
+      )
+    })
   })
 
   output$songsClock = renderPlot({
-    songsFiltered = filterDF(
-      songs,
-      input$selArtist,
-      input$selTitle,
-      input$selQuarter,
-      input$selMonth,
-      input$selWday,
-      input$selSeason,
-      input$selRushHour,
-      input$selDateRange
-    )
-
-    distSongs = songsFiltered %>%
-      group_by(hour) %>%
-      summarise(
-        playCount = n()
+    withProgress(message='Generating clock...', {
+      songsFiltered = filterDF(
+        songs,
+        input$selArtist,
+        input$selTitle,
+        input$selQuarter,
+        input$selMonth,
+        input$selWday,
+        input$selSeason,
+        input$selRushHour,
+        input$selDateRange
       )
 
-    fromCol = '#d73925'
-    toCol = '#e77d72'
-    songsCol = colorRampPalette(c(fromCol, toCol))(24)
+      incProgress(0.25)
 
-    ggplot(distSongs, aes(x=hour, y=playCount, fill=playCount)) +
-      geom_bar(stat='identity') +
-      coord_polar() +
-      theme_bw() +
-      labs(x = 'Hour of day', y = '', fill = 'Playcount') +
-      theme(
-        plot.title = element_text(hjust = 0.5, size = 22),
-        plot.subtitle = element_text(hjust = .5, size = 16),
-        axis.text.y = element_blank(),
-        axis.ticks.y = element_blank()
-      ) +
-      guides(fill='legend') +
-      ggtitle(paste('Playcounts during the day')) +
-      scale_fill_gradient(low='darkred', high=toCol)
+      distSongs = songsFiltered %>%
+        group_by(hour) %>%
+        summarise(
+          playCount = n()
+        )
 
+      fromCol = '#FFFFFF'
+      toCol = '#FF0000'
+      songsCol = colorRampPalette(c(fromCol, toCol))(24)
+
+      incProgress(0.75)
+
+      ggplot(distSongs, aes(x=hour, y=playCount, fill=playCount)) +
+        geom_bar(stat='identity') +
+        coord_polar() +
+        theme_bw() +
+        labs(x = 'Hour of day', y = '', fill = 'Playcount') +
+        theme(
+          plot.title = element_text(hjust = 0.5, size = 22),
+          plot.subtitle = element_text(hjust = .5, size = 16),
+          axis.text.y = element_blank(),
+          axis.ticks.y = element_blank()
+        ) +
+        guides(fill='legend') +
+        ggtitle(paste('Playcounts during the day')) +
+        scale_fill_gradient(low='darkred', high=toCol)
+    })
   })
 
   output$songsHisto = renderGvis({
-    songsFiltered = filterDF(
-      songs,
-      input$selArtist,
-      input$selTitle,
-      input$selQuarter,
-      input$selMonth,
-      input$selWday,
-      input$selSeason,
-      input$selRushHour,
-      input$selDateRange
-    )
-
-    distSongs = songsFiltered %>%
-      group_by(artist, title) %>%
-      summarise(
-        playCount = n()
+    withProgress(message='Generating histogram...', {
+      songsFiltered = filterDF(
+        songs,
+        input$selArtist,
+        input$selTitle,
+        input$selQuarter,
+        input$selMonth,
+        input$selWday,
+        input$selSeason,
+        input$selRushHour,
+        input$selDateRange
       )
 
-    gvisHistogram(
-      distSongs[, 'playCount'],
-      options = list(
-        width='100%',
-        height=500,
-        title=paste('Frequency of playcounts'),
-        hAxis=
-          paste(
-            "{",
-              "slantedText: true",
-            "}"
-          ),
-        colors=
-          paste(
-          '[',
-            "'red'",
-          ']'
+      incProgress(0.25)
+
+      distSongs = songsFiltered %>%
+        group_by(artist, title) %>%
+        summarise(
+          playCount = n()
         )
-      )
-    )
-  })
 
-  output$songsArtist = renderGvis({
-    songsFiltered = filterDF(
-      songs,
-      input$selArtist,
-      input$selTitle,
-      input$selQuarter,
-      input$selMonth,
-      input$selWday,
-      input$selSeason,
-      input$selRushHour,
-      input$selDateRange
-    )
+      incProgress(0.75)
 
-    distSongs = songsFiltered %>%
-      group_by(artist) %>%
-      summarise(
-        songCount = n_distinct(title)
-      ) %>% arrange(desc(songCount))
-
-    gvisColumnChart(
-      distSongs[input$sliSongsPerArtist[1]:input$sliSongsPerArtist[2], ],
-      xvar='artist',
-      yvar='songCount',
-      options = list(
-        width='100%',
-        height=500,
-        title=paste('Songs per Artist'),
-        hAxis=
-          paste(
-            '{',
-              'slantedText: true,',
-              'textStyle:',
-              '{',
-                'fontSize: 9',
-              '}',
-            '}'
-          ),
-        vAxis=
-          paste(
-            '{',
-              'minorGridlines:',
-                '{',
-                  'count: 1',
-                '}',
-            '}'
-          ),
-        colors=
-          paste(
+      gvisHistogram(
+        distSongs[, 'playCount'],
+        options = list(
+          width='100%',
+          height=500,
+          title=paste('Frequency of playcounts'),
+          hAxis=
+            paste(
+              "{",
+                "slantedText: true",
+              "}"
+            ),
+          colors=
+            paste(
             '[',
               '\'red\'',
             ']'
-          ),
-        chartArea='{ width: \'90%\' }'
+          )
+        )
       )
-    )
+    })
+  })
+
+  output$songsArtist = renderGvis({
+    withProgress(message='Generating bar chart...', {
+      songsFiltered = filterDF(
+        songs,
+        input$selArtist,
+        input$selTitle,
+        input$selQuarter,
+        input$selMonth,
+        input$selWday,
+        input$selSeason,
+        input$selRushHour,
+        input$selDateRange
+      )
+
+      incProgress(0.25)
+
+      distSongs = songsFiltered %>%
+        group_by(artist) %>%
+        summarise(
+          songCount = n_distinct(title)
+        ) %>% arrange(desc(songCount))
+
+      incProgress(0.75)
+
+      gvisColumnChart(
+        distSongs[input$sliSongsPerArtist[1]:input$sliSongsPerArtist[2], ],
+        xvar='artist',
+        yvar='songCount',
+        options = list(
+          width='100%',
+          height=500,
+          title=paste('Songs per Artist'),
+          hAxis=
+            paste(
+              '{',
+                'slantedText: true,',
+                'textStyle:',
+                '{',
+                  'fontSize: 9',
+                '}',
+              '}'
+            ),
+          vAxis=
+            paste(
+              '{',
+                'minorGridlines:',
+                  '{',
+                    'count: 1',
+                  '}',
+              '}'
+            ),
+          colors=
+            paste(
+              '[',
+                '\'red\'',
+              ']'
+            ),
+          chartArea='{ width: \'90%\' }'
+        )
+      )
+    })
+  })
+
+  output$songsCloud = renderWordcloud2({
+    withProgress(message='Generating word cloud...', {
+      songsFiltered = filterDF(
+        songs,
+        input$selArtist,
+        input$selTitle,
+        input$selQuarter,
+        input$selMonth,
+        input$selWday,
+        input$selSeason,
+        input$selRushHour,
+        input$selDateRange
+      )
+
+      incProgress(0.1)
+
+      # Dict for wordcloud
+      titleSplit = unlist(lapply(unique(songsFiltered$title), function(x) strsplit(x, '\\s|-|,|&|\\?|\\(|\\)')))
+      titleDict = {}
+
+      incProgress(0.3)
+
+      for (word in titleSplit) {
+        word = trimws(tolower(word))
+
+        if (word!='' & nchar(word) > 0) {
+          if (word %in% names(titleDict)) {
+            titleDict[word] = titleDict[word] + 1
+          } else {
+            titleDict[word] = 1
+          }
+        }
+      }
+
+      incProgress(0.5)
+
+      titleDict = data.frame(word=names(titleDict), freq=titleDict)
+      titleDict$word = as.character(titleDict$word)
+      titleDict = arrange(titleDict, desc(freq))
+
+      incProgress(0.6)
+
+      wordcloud2(
+        filter(titleDict[1:min(nrow(titleDict), input$sliWordCloudWords), ], word %ni% wordCloudFilter),
+        figPath='www/wordcloud-path.png',
+        color='red',
+        size=1
+      )
+    })
   })
 })
