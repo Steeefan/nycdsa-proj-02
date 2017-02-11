@@ -16,7 +16,6 @@ dbHeader$children[[2]]$children =
     target='_blank'
   )
 
-
 shinyUI(dashboardPage(
   skin='red',
 
@@ -86,58 +85,69 @@ shinyUI(dashboardPage(
             collapsed=T,
 
             column(
-              selectInput(
+              selectizeInput(
                 'selArtist',
                 label='Artist',
                 choices=arrange(distinct(songs, artist), artist),
-                multiple=T
+                multiple=T,
+                options=list(placeholder='Select artists')
               ),
-              # uiOutput('selArtistCtrl'),
+              # selectInput(
+              #   'selArtist',
+              #   label='Arist',
+              #   choices=arrange(distinct(songs, artist), artist),
+              #   selected=NULL,
+              #   multiple=T
+              # ),
               width=2
             ),
 
             column(
-              selectInput(
+              selectizeInput(
                 'selTitle',
                 label='Title',
                 choices=arrange(distinct(songs, title), title),
-                multiple=T
+                multiple=T,
+                options=list(placeholder='Select titles')
               ),
               width=2
             ),
 
             column(
-              selectInput(
+              selectizeInput(
                 'selQuarter',
                 label='Quarter',
                 choices=1:4,
-                multiple=T
+                multiple=T,
+                options=list(placeholder='Quarters')
               ),
               width=1
             ),
 
             column(
-              selectInput(
+              selectizeInput(
                 'selMonth',
                 label='Month',
                 choices=1:12,
-                multiple=T
+                multiple=T,
+                options=list(placeholder='Months')
               ),
               width=1
             ),
 
             column(
-              selectInput(
+              selectizeInput(
                 'selWday',
                 label='Weekday',
                 choices=c('Mon', 'Tue', 'Wed', 'Thu', 'Fri', 'Sat', 'Sun'),
-                multiple=T
+                multiple=T,
+                options=list(placeholder='Weekdays')
               ),
               width=1
             ),
 
             column(
-              selectInput(
+              selectizeInput(
                 'selSeason',
                 label='Season',
                 choices=c(
@@ -145,20 +155,22 @@ shinyUI(dashboardPage(
                   'Spring' = 'spring',
                   'Summer' = 'summer',
                   'Fall' = 'fall'),
-                multiple=T
+                multiple=T,
+                options=list(placeholder='Seasons')
               ),
               width=1
             ),
 
             column(
-              selectInput(
+              selectizeInput(
                 'selRushHour',
                 label='Rush Hour',
                 choices=c(
                   'Morning' = 'morning',
                   'Evening' = 'evening'
                   ),
-                multiple=T
+                multiple=T,
+                options=list(placeholder='Rush hours')
               ),
               width=1
             ),
@@ -178,7 +190,7 @@ shinyUI(dashboardPage(
 
             column(
               actionButton(
-                'selReset',
+                'abResetFilter',
                 'Reset',
                 style='position: relative; top: 22px'
               ),
@@ -245,9 +257,16 @@ shinyUI(dashboardPage(
 
             tabPanel(
               'Songs per Artist',
-                fluidRow(
+              fluidRow(
                 box(
                   h2('Distinct songs per artist'),
+                  width=12,
+                  solidHeader=T
+                ),
+
+                box(
+                  title='Scrollbar',
+
                   sliderInput(
                     'sliSongsPerArtist',
                     label=h4('Scrollbar'),
@@ -255,7 +274,13 @@ shinyUI(dashboardPage(
                     max=n_distinct(songs$artist),
                     value=c(0, 200)
                   ),
+                  width=12,
+                  solidHeader=T,
+                  collapsible=T,
+                  collapsed=T
+                ),
 
+                box(
                   htmlOutput('songsArtist'),
                   width=12,
                   solidHeader=T
@@ -267,15 +292,65 @@ shinyUI(dashboardPage(
               'Song Title Word Cloud',
 
               fluidRow(
-                h2('300 top words in song titles'),
                 box(
-                  sliderInput(
-                    'sliWordCloudWords',
-                    label=h4('Select amount of words to show'),
-                    min=0,
-                    max=1000,
-                    value=300
+                  h2('300 top words in song titles'),
+                  width=12,
+                  solidHeader=T
+                ),
+
+                box(
+                  title='Word cloud settings',
+
+                  fluidRow(
+                    column(
+                      sliderInput(
+                        'sliWordCloudWords',
+                        label=h4('Select amount of words to show'),
+                        min=0,
+                        max=1000,
+                        value=300
+                      ),
+                      width=7
+                    ),
+
+                    column(
+                      width=2,
+                      textInput(
+                        'tiWordCloudFilter',
+                        label=h4('Filter words'),
+                        value=paste(wordCloudFilter, collapse=',')
+                      )
+                    ),
+
+                    column(
+                      width=1,
+                      radioButtons(
+                        'rbWordCloudMoose',
+                        label=h4('Shape'),
+                        choices=c('Moose','Circle'),
+                        selected='Moose'
+                      )
+                    ),
+
+                    column(
+                      width=1,
+                      actionButton(
+                        'abWordCloud',
+                        label='Apply',
+                        style='position: relative; top: 45px'
+                      )
+                    ),
+
+                    column(
+                      width=1,
+                      actionButton(
+                        'abResetWordCloud',
+                        label='Reset',
+                        style='position: relative; top: 45px'
+                      )
+                    )
                   ),
+
                   width=12,
                   solidHeader=T,
                   collapsible=T,
@@ -355,5 +430,6 @@ shinyUI(dashboardPage(
         )
       )
     )
-  )
+  ),
+  useShinyjs()
 ))

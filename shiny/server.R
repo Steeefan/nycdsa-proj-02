@@ -1,6 +1,30 @@
 # server.R
 
-shinyServer(function(input, output) {
+shinyServer(function(input, output, session) {
+  # observe({
+  #   title = input$selTitle
+  #
+  #   songsFiltered = filterDF(
+  #     songs,
+  #     input$selArtist,
+  #     input$selTitle,
+  #     input$selQuarter,
+  #     input$selMonth,
+  #     input$selWday,
+  #     input$selSeason,
+  #     input$selRushHour,
+  #     input$selDateRange
+  #   )
+  #
+  #   cat(nrow(songsFiltered))
+  #
+  #   updateSelectInput(
+  #     session,
+  #     'selArtist',
+  #     choices=distinct(songsFiltered, artist), #arrange(distinct(songsFiltered, artist), artist),
+  #     selected=NULL
+  #   )
+  # })
 
   ## START
   output$datesLoaded = renderInfoBox({
@@ -82,8 +106,26 @@ shinyServer(function(input, output) {
     )
   })
 
+  ## FILTERS
+  observeEvent(input$abResetFilter, {
+    reset('selArtist')
+    reset('selTitle')
+    reset('selQuarter')
+    reset('selMonth')
+    reset('selWday')
+    reset('selSeason')
+    reset('selRushHour')
+    reset('selDateRange')
+  })
+
+  observeEvent(input$abResetWordCloud, {
+    reset('sliWordCloudWords')
+    reset('tiWordCloudFilter')
+    reset('rbWordCloudMoose')
+  })
+
   ## SONGS
-  output$songsTable = renderDataTable({
+  songsTableReact = reactive({
     withProgress(message='Generating data table...', {
       songsFiltered = filterDF(
         songs,
@@ -123,7 +165,12 @@ shinyServer(function(input, output) {
     })
   })
 
-  output$songsCalendar = renderGvis({
+  output$songsTable = renderDataTable({
+    songsTableReact()
+  })
+
+
+  songsCalendarReact = reactive({
     withProgress(message='Generating calendar...', {
       songsFiltered = filterDF(
         songs,
@@ -158,15 +205,20 @@ shinyServer(function(input, output) {
           colorAxis=
             paste(
               '{',
-                'minValue: 0, colors: [\'#FFFFFF\', \'#FF0000\']',
+              'minValue: 0, colors: [\'#FFFFFF\', \'#FF0000\']',
               '}'
-          )
+            )
         )
       )
     })
   })
 
-  output$songsClock = renderPlot({
+  output$songsCalendar = renderGvis({
+    songsCalendarReact()
+  })
+
+
+  songsClockReact = reactive({
     withProgress(message='Generating clock...', {
       songsFiltered = filterDF(
         songs,
@@ -211,7 +263,12 @@ shinyServer(function(input, output) {
     })
   })
 
-  output$songsHisto = renderGvis({
+  output$songsClock = renderPlot({
+    songsClockReact()
+  })
+
+
+  songsHistoReact = reactive({
     withProgress(message='Generating histogram...', {
       songsFiltered = filterDF(
         songs,
@@ -244,21 +301,26 @@ shinyServer(function(input, output) {
           hAxis=
             paste(
               "{",
-                "slantedText: true",
+              "slantedText: true",
               "}"
             ),
           colors=
             paste(
-            '[',
+              '[',
               '\'red\'',
-            ']'
-          )
+              ']'
+            )
         )
       )
     })
   })
 
-  output$songsArtist = renderGvis({
+  output$songsHisto = renderGvis({
+    songsHistoReact()
+  })
+
+
+  songsArtistReact = reactive({
     withProgress(message='Generating bar chart...', {
       songsFiltered = filterDF(
         songs,
@@ -293,26 +355,26 @@ shinyServer(function(input, output) {
           hAxis=
             paste(
               '{',
-                'slantedText: true,',
-                'textStyle:',
-                '{',
-                  'fontSize: 9',
-                '}',
+              'slantedText: true,',
+              'textStyle:',
+              '{',
+              'fontSize: 9',
+              '}',
               '}'
             ),
           vAxis=
             paste(
               '{',
-                'minorGridlines:',
-                  '{',
-                    'count: 1',
-                  '}',
+              'minorGridlines:',
+              '{',
+              'count: 1',
+              '}',
               '}'
             ),
           colors=
             paste(
               '[',
-                '\'red\'',
+              '\'red\'',
               ']'
             ),
           chartArea='{ width: \'90%\' }'
@@ -321,54 +383,82 @@ shinyServer(function(input, output) {
     })
   })
 
-  output$songsCloud = renderWordcloud2({
-    withProgress(message='Generating word cloud...', {
-      songsFiltered = filterDF(
-        songs,
-        input$selArtist,
-        input$selTitle,
-        input$selQuarter,
-        input$selMonth,
-        input$selWday,
-        input$selSeason,
-        input$selRushHour,
-        input$selDateRange
-      )
+  output$songsArtist = renderGvis({
+    songsArtistReact()
+  })
 
-      incProgress(0.1)
 
-      # Dict for wordcloud
-      titleSplit = unlist(lapply(unique(songsFiltered$title), function(x) strsplit(x, '\\s|-|,|&|\\?|\\(|\\)')))
-      titleDict = {}
+  songsCloudReact = reactive({
+    input$abWordCloud
 
-      incProgress(0.3)
+    if (input$abWordCloud > abWordCloudVal) {
+      abWordCloudVal <<- input$abWordCloud
 
-      for (word in titleSplit) {
-        word = trimws(tolower(word))
+      withProgress(message='Generating word cloud...', {
+        songsFiltered = filterDF(
+          songs,
+          input$selArtist,
+          input$selTitle,
+          input$selQuarter,
+          input$selMonth,
+          input$selWday,
+          input$selSeason,
+          input$selRushHour,
+          input$selDateRange
+        )
 
-        if (word!='' & nchar(word) > 0) {
-          if (word %in% names(titleDict)) {
-            titleDict[word] = titleDict[word] + 1
-          } else {
-            titleDict[word] = 1
+        incProgress(0.1)
+
+        # Dict for wordcloud
+        titleSplit = unlist(lapply(unique(songsFiltered$title), function(x) strsplit(x, '\\s|-|,|&|\\?|\\(|\\)')))
+        titleDict = {}
+
+        incProgress(0.3)
+
+        for (word in titleSplit) {
+          word = trimws(tolower(word))
+
+          if (word!='' & nchar(word) > 0) {
+            if (word %in% names(titleDict)) {
+              titleDict[word] = titleDict[word] + 1
+            } else {
+              titleDict[word] = 1
+            }
           }
         }
-      }
 
-      incProgress(0.5)
+        incProgress(0.5)
 
-      titleDict = data.frame(word=names(titleDict), freq=titleDict)
-      titleDict$word = as.character(titleDict$word)
-      titleDict = arrange(titleDict, desc(freq))
+        titleDict = data.frame(word=names(titleDict), freq=titleDict, stringsAsFactors=F)
+        titleDict = arrange(titleDict, desc(freq))
 
-      incProgress(0.6)
+        incProgress(0.6)
 
-      wordcloud2(
-        filter(titleDict[1:min(nrow(titleDict), input$sliWordCloudWords), ], word %ni% wordCloudFilter),
-        figPath='www/wordcloud-path.png',
-        color='red',
-        size=1
-      )
-    })
+        filterWords = strsplit(input$tiWordCloudFilter, ',')[[1]]
+
+        if (input$rbWordCloudMoose == 'Moose') {
+          figPath = 'www/wordcloud-path.png'
+          shape = NULL
+        } else {
+          figPath = NULL
+          shape = 'circle'
+        }
+
+        wordcloud2(
+          filter(
+            titleDict[1:min(nrow(titleDict), input$sliWordCloudWords), ],
+            word %ni% filterWords
+          ),
+          figPath=figPath,
+          shape=shape,
+          color='red',
+          size=1
+        )
+      })
+    }
+  })
+
+  output$songsCloud = renderWordcloud2({
+    songsCloudReact()
   })
 })

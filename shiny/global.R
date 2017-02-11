@@ -1,6 +1,7 @@
 # Shiny
 library(shiny)
 library(shinydashboard)
+library(shinyjs)
 
 # Charts
 library(googleVis)
@@ -45,3 +46,5 @@ distSongs = songs %>%
   summarise(
     playCount = n()
   )
+
+abWordCloudVal = -1
