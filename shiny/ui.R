@@ -293,7 +293,7 @@ shinyUI(dashboardPage(
 
               fluidRow(
                 box(
-                  h2('300 top words in song titles'),
+                  h2('Top words in song titles'),
                   width=12,
                   solidHeader=T
                 ),
